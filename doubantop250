@@ -1,0 +1,108 @@
+import requests
+import bs4
+import re
+import time
+import string
+import openpyxl
+
+def get_url(url):
+    headers={"user-agent":"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36"}
+    res=requests.get(url,headers=headers)
+    return res
+
+def get_data(html):
+    soup=bs4.BeautifulSoup(html.text,"html.parser")
+    #print(soup)
+    list=soup.find('ol',class_="grid_view")
+    result=[]
+    name=[]
+    index=[]
+    score=[]
+    writer=[]
+    quote=[]
+    targets=list.find_all('div',class_="hd")
+    #print(targets)
+    for each in targets:
+        try:
+            name.append(each.a.span.text)
+        except:
+            continue
+    #print(name)    
+    targets=list.find_all('div',class_="pic")
+    for each in targets:
+        try:
+            index.append(each.em.text)
+        except:
+            continue
+    #print(index)
+    targets=list.find_all('span',class_="rating_num")
+    for each in targets:
+        try:
+            score.append(each.text)
+        except:
+            continue
+    #print(score)
+    targets=list.find_all('div',class_="bd")
+    for each in targets:
+        try:
+            writer.append(each.p.text.replace(" ","").replace("\n","").replace("\xa0", ""))#只要第一个
+        except:
+            continue
+    #print(writer)
+    targets=list.find_all('span',class_="inq")
+    #因为个别电影（寄生虫）没有简评所以这里数据加入列表时会报错
+    for each in targets:
+        if len(each)>0 :#len(each)判断字符串是否为空
+            quote.append(each.text)
+        else:
+            quote.append("?????")
+            
+        '''
+        try:
+            quote.append(each.text)
+        except:
+            print("出现错误")
+        '''
+    print(quote)
+    length=len(name)
+    #print(length)
+    #print(str(name[0])+str(index[0])+str(score[0])+str(writer[0])+str(quote[0]))#已变成字符串形式
+    for i in range(length):
+        #print(i)
+        #result.append(name[i] + index[i] + score[i] + writer[i] + quote[i] + '\n')#文本打印
+        result.append([name[i],index[i],score[i],writer[i],quote[i]])
+    return result
+    #print(result)
+   
+def to_excel(result):
+    wb=openpyxl.Workbook()
+    ws=wb.active
+    ws['A1']="电影名称"
+    ws['B1']="排名"
+    ws['C1']="评分"
+    ws['D1']="资料"
+    ws['E1']="简评"
+    for each in result:
+        ws.append(each)
+    wb.save("豆瓣250.xlsx")
+    
+def main():    
+    #url="https://movie.douban.com/top250"
+    result=[]
+    for page in range(0,250,25):
+        #print("第",page,"页")
+        page=150
+        url="https://movie.douban.com/top250?start={}".format(page)
+        html=get_url(url)
+        res=get_data(html)
+        result.extend(res)
+        #time.sleep(5)
+    to_excel(result)
+    
+    '''
+    with open("豆瓣top250.txt","w",encoding="utf-8")as f:
+        for each in result:
+            f.write(each)
+    '''
+if __name__=="__main__":
+    main()
