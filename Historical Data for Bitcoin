@@ -1,0 +1,61 @@
+import requests
+import json
+import time
+import matplotlib
+import matplotlib.pyplot as plt
+import openpyxl
+import numpy as np
+import datetime
+
+def get_price():
+    headers={"user-agent":"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"}
+    url="https://api.coinmarketcap.com/data-api/v3/cryptocurrency/historical?id=1&convertId=2781&timeStart=1590687961&timeEnd=1622223961"
+    res=requests.get(url,headers=headers)
+    temp=json.loads(res.text)
+    data=temp.get('data')
+    quotes=data.get('quotes')
+    length=len(quotes)
+    data=[]
+    price=[]
+    volume=[]
+    marketcap=[]
+    result=[]
+    for each in range(length):
+        
+        quotes_date=quotes[each]
+        
+        date=str(quotes_date.get('timeOpen').split('T')[0])
+        quote=quotes_date.get('quote')
+        price=str(quote.get('close'))
+        volume=str(quote.get('volume'))
+        marketcap=str(quote.get('marketCap'))        
+        result.append([date,price,volume,marketcap])#
+        #result.append([date,price])
+    #print(result)
+    return result
+def to_excel(result):
+    print(result)
+    wb=openpyxl.Workbook()
+    wb.guess_types=True
+    ws=wb.active
+    
+    ws['A1']="date"
+    ws['B1']="price"
+    ws['C1']="volume"
+    ws['D1']="martetcap"
+    
+    #ws.append(['date','price','volume','marketcap'])
+    for each in result:
+        ws.append(each)
+    wb.save("比特币历史价格表.xlsx")
+def draw(result):
+    
+    
+def main():
+    result=get_price()
+    to_excel(result)
+    #draw(result)
+
+
+if __name__=="__main__":
+    main()
