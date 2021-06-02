@@ -48,7 +48,6 @@ def to_excel(result):
         ws.append(each)
     wb.save("比特币历史价格表.xlsx")
 def draw(result):
-    #实现坐标X轴显示日期，Y轴显示价格，动画展示
     plt.figure(2)
     plt.clf()
     plt.title('BitCoin')
