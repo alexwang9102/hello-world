@@ -5,7 +5,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import openpyxl
 import numpy as np
-import datetime
+from datetime import datetime
+is_ipython = 'inline' in matplotlib.get_backend()
+if is_ipython:
+        from IPython import display
 
 def get_price():
     headers={"user-agent":"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"}
@@ -21,41 +24,68 @@ def get_price():
     marketcap=[]
     result=[]
     for each in range(length):
-        
         quotes_date=quotes[each]
-        
-        date=str(quotes_date.get('timeOpen').split('T')[0])
+        date=quotes_date.get('timeOpen').split('T')[0]
         quote=quotes_date.get('quote')
-        price=str(quote.get('close'))
+        price=quote.get('close')
         volume=str(quote.get('volume'))
         marketcap=str(quote.get('marketCap'))        
-        result.append([date,price,volume,marketcap])#
-        #result.append([date,price])
-    #print(result)
+        #result.append([date,price,volume,marketcap])#
+        result.append([date,price])
     return result
 def to_excel(result):
-    print(result)
     wb=openpyxl.Workbook()
     wb.guess_types=True
     ws=wb.active
     
     ws['A1']="date"
     ws['B1']="price"
-    ws['C1']="volume"
-    ws['D1']="martetcap"
+    #ws['C1']="volume"
+    #ws['D1']="martetcap"
     
     #ws.append(['date','price','volume','marketcap'])
     for each in result:
         ws.append(each)
     wb.save("比特币历史价格表.xlsx")
 def draw(result):
+    #实现坐标X轴显示日期，Y轴显示价格，动画展示
+    plt.figure(2)
+    plt.clf()
+    plt.title('BitCoin')
+    plt.xlabel('Time')
+    plt.ylabel('Price($)')
+    dates=[]
+    prices=[]
+    for row in result:
+            date=datetime.strptime(row[0],'%Y-%m-%d')
+            price=int(row[1])
+            dates.append(date)
+            prices.append(price)
+    plt.plot(dates,prices)
+    plt.pause(0)
     
+    if is_ipython:
+            display.clear_output(wait=True)
+            display.display(plt.clf())
     
+def run(save_num,interval):
+        while True:
+                result=get_price()
+                if result:
+                        draw(result)
+                        break#测试只运行一次
+                else:
+                        time.sleep(interval)
+                        continue
+                if len(result)>save_num:
+                        to_excel(result)
+                time.sleep(interval)
+        
 def main():
-    result=get_price()
-    to_excel(result)
-    #draw(result)
-
+    #to_excel(result)
+    save_num=1000
+    interval=60
+    run(save_num,interval)
 
 if __name__=="__main__":
     main()
